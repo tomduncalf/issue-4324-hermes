@@ -1,12 +1,30 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {SafeAreaView, View, StyleSheet} from 'react-native';
-import Realm from 'realm';
+import Realm, {BSON} from 'realm';
 
 import Task from './app/models/Task';
 import IntroText from './app/components/IntroText';
 import AddTaskForm from './app/components/AddTaskForm';
 import TaskList from './app/components/TaskList';
 import colors from './app/styles/colors';
+
+const ExerciseSchema = {
+  name: 'Exercise',
+  primaryKey: 'id',
+  properties: {
+    id: 'string',
+    name: 'string',
+    tags: 'string',
+    functionnalGroups: 'string',
+    difficulty: 'int',
+    equipment: 'string',
+    advice: 'string?',
+    alias: 'string?',
+    description: 'string?',
+    videoAuthor: 'string?',
+    authorInstagram: 'string?',
+  },
+};
 
 function App() {
   // The tasks will be set once the realm has opened and the collection has been queried.
@@ -22,7 +40,7 @@ function App() {
     try {
       // Open a local realm file with the schema(s) that are a part of this realm.
       const config = {
-        schema: [Task.schema],
+        schema: [Task.schema, ExerciseSchema],
         // Uncomment the line below to specify that this Realm should be deleted if a migration is needed.
         // (This option is not available on synced realms and is NOT suitable for production when set to true)
         // deleteRealmIfMigrationNeeded: true   // default is false
@@ -55,8 +73,33 @@ function App() {
         // argument) will not trigger a rerender since it is the same reference
         setTasks(realm.objects('Task'));
 
-        console.log(realm.objects('Task'));
+        const tasks = realm.objects('Task');
+        console.log(tasks);
       });
+
+      realm.write(() => {
+        for (let i = 0; i < 100; i++) {
+          realm.create('Exercise', {
+            id: new BSON.ObjectID().toHexString(),
+            name: 'Elevated Planche Lean',
+            tags: 'upperbody/push/bodyweight/isometric/no_assist',
+            functionnalGroups: JSON.stringify([
+              'Epaules',
+              'flexibilité des poignets',
+              'Long biceps',
+              'Dentelés',
+              'Biceps flexibility',
+            ]),
+            alias: JSON.stringify([]),
+            equipment: JSON.stringify(['parallettes', "Pas d'equipement"]),
+            difficulty: 5,
+          });
+        }
+      });
+
+      const exerciseList = realm.objects('Exercise');
+      console.log(exerciseList); //Return [[Circular]]
+      console.log(exerciseList[0]);
     } catch (err) {
       console.error('Error opening realm: ', err.message);
     }
